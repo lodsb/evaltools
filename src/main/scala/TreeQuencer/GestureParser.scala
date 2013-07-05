@@ -2,11 +2,24 @@ package TreeQuencer
 
 import SessionLogLoader._
 
-class Topology(val coord: (Float, Float, Float), val rot: (Float, Float, Float), val scale: Float)
+class Topology(val coord: (Float, Float, Float), val rot: (Float, Float, Float), val scale: Float) extends Exportable {
+  override def csvDescriptor = "coordX"+dlmtr+"coordY"+dlmtr+"coordZ"+dlmtr+"rotX"+dlmtr+"rotY"+"rotZ"+dlmtr+"scale"
+
+  override def toCSV = {
+    ""+coord._1+dlmtr+coord._2+dlmtr+coord._3+dlmtr+rot._1+dlmtr+rot._2+dlmtr+rot._3+dlmtr+scale
+  }
+}
 class Gesture(val t: String, val node: Node, val lenMilli: Long,
               val beginTopo: Topology,
               val endTopo: Topology,
-              val posDev: Double, rotDev: Double, val scaleDev: Double )
+              val posDev: Double, rotDev: Double, val scaleDev: Double ) extends Exportable {
+
+  override def csvDescriptor = beginTopo.csvDescriptor+dlmtr+endTopo.csvDescriptor+dlmtr+"posDev"+dlmtr+"rotDev"+dlmtr+"scaleDev"
+
+  override def toCSV = {
+    beginTopo.toCSV+dlmtr+endTopo.toCSV+dlmtr+posDev+dlmtr+rotDev+dlmtr+scaleDev
+  }
+}
 
 object GestureParser extends Parser[(SessionLogLoader.Row, SessionLogLoader.Row), Gesture] {
   def process(rows: (SessionLogLoader.Row, SessionLogLoader.Row)): Gesture = {

@@ -26,9 +26,11 @@ unmanagedBase <<= baseDirectory { base => base / "libraries/misc" }
 
 resolvers += "sbt-idea-repo" at "http://mpeltonen.github.com/maven/"
 
+libraryDependencies += "com.assembla.scala-incubator" % "graph-core_2.10" % "1.6.0"
+
 resolvers += "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
 
-addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.3.0-SNAPSHOT")
+addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.4.0")
 
 resolvers += "Twitter repo" at "http://maven.twttr.com/"
 

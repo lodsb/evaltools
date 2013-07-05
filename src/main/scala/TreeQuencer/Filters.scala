@@ -27,4 +27,8 @@ object Filters {
       row(SessionLogLoader.RowEvtType) == "EndGesture"
   }
 
+  val MetronomeChangedFilter: SessionLogLoader.RowFilter = { row =>
+      row(SessionLogLoader.RowEvtType) == "Event" && row(SessionLogLoader.RowMsg).contains("Changed Metronome")
+  }
+
 }
