@@ -1,6 +1,6 @@
 name := "evaltools"
 
-scalaVersion := "2.9.2"
+scalaVersion := "2.10.0"
 
 organization := "org.lodsb"
 
@@ -30,7 +30,7 @@ libraryDependencies += "com.assembla.scala-incubator" % "graph-core_2.10" % "1.6
 
 resolvers += "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
 
-addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.4.0")
+//addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.5-SNAPSHOT")
 
 resolvers += "Twitter repo" at "http://maven.twttr.com/"
 

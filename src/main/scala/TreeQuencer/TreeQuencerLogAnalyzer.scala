@@ -27,11 +27,14 @@ class GraphStatistics(val noNodes: Int, val noEdges: Int,
   }
 
   override def toCSV = {
-    ""+noNodes+dlmtr+noEdges+dlmtr+avgDeg+dlmtr+varDeg+medianDeg
+    ""+noNodes+dlmtr+noEdges+dlmtr+avgDeg+dlmtr+varDeg+dlmtr+medianDeg
   }
 }
 
 object TreeQuencerLogAnalyzer extends App {
+
+  var synthNodeTypes: Seq[String] = Array("angular_something", "cube", "pentagon", "iconosphere", "tetrahedron", "decimate")
+
 
   def creationSequence(log: LogTable) : Seq[(Long,  Node)]=  {
     val sequence =  log.filter(x => NodeCreationFilter(x)).map(
@@ -42,6 +45,10 @@ object TreeQuencerLogAnalyzer extends App {
     )
 
     sequence.sortWith( (x,y) => (x._1 < y._1) )
+  }
+
+  def rootNodes(creationSeq : Seq[(Long,Node)]): Seq[Node] = {
+    creationSeq.filter(x => x._2.name == "center").map( x => x._2)
   }
 
   def removalSequence(log: LogTable) : Seq[(Long,  Node)]=  {
@@ -160,7 +167,7 @@ object TreeQuencerLogAnalyzer extends App {
       op match {
         case GraphOperation(AddN, srcN, _) =>   currentGraph = currentGraph + srcN
         case GraphOperation(RmN, srcN, _) =>    currentGraph = currentGraph - srcN
-        case GraphOperation(AddC, srcN, dstN) => currentGraph = currentGraph + srcN ~> dstN
+        case GraphOperation(AddC, srcN, dstN) => currentGraph = currentGraph + dstN ~> srcN
         case GraphOperation(RmC, srcN, dstN) => currentGraph = currentGraph -(srcN ~> dstN)
       }
 
@@ -188,26 +195,35 @@ object TreeQuencerLogAnalyzer extends App {
   // The lazy way...
   def pathStatistics(g: Graph[Node, DiEdge]) : PathStatistics = {
     val nodes = g.nodes
+    val nodes2= g.nodes
     val pathsHistogram = Array[Int](20);
     var pathLengthList = List[Double]();
 
+    println(nodes.size)
+
     nodes.foreach({   n1 =>
-      nodes.foreach({ n2 =>
+      nodes2.foreach({ n2 =>
         val p = n1 pathTo n2
         if(!p.isEmpty) {
-          val idx = p.toList.length
+          val plength = p.toList.length
+          val idx = plength -1
 
           pathsHistogram(idx) = pathsHistogram(idx) + 1;
 
-          pathLengthList = pathLengthList :+ idx.toDouble
+          pathLengthList = pathLengthList :+ plength.toDouble
         }
       })
     })
 
+    var avg = 0.0;
+    var med = 0.0;
+    var variance= 0.0;
 
-    val avg       = mean(pathLengthList)
-    val variance  = stdDev(pathLengthList)
-    val med    = median(pathLengthList)
+    if(!pathLengthList.isEmpty) {
+      avg       = mean(pathLengthList)
+      variance  = stdDev(pathLengthList)
+      med    = median(pathLengthList)
+    }
 
     new PathStatistics(avg, variance, med, pathsHistogram)
   }
@@ -252,6 +268,12 @@ object TreeQuencerLogAnalyzer extends App {
 
 
     SessionLogLoader.printSeqCollection(fileMap)
+
+    val rootN = rootNodes(crs)
+
+    rootN.foreach(println(_))
+
+    grs.map( x => RhythmReconstruction.printScore(RhythmReconstruction.game0And2(rootN, x._2, {x:Node => 0} ) ) )
   }
 
 }
