@@ -15,7 +15,7 @@ class PathStatistics(val meanLength: Double, val stdVar: Double,
 
   override def toCSV = {
     var histo = lengthHisto.foldLeft("")( (x,y) => x+dlmtr+y )
-    ""+meanLength+dlmtr+stdVar+dlmtr+medianLength+lengthHisto
+    ""+meanLength+dlmtr+stdVar+dlmtr+medianLength+dlmtr+lengthHisto
   }
 }
 
@@ -153,10 +153,14 @@ object TreeQuencerLogAnalyzer extends App {
     val crNOps = crNodes.map( x => (x._1, GraphOperation(AddN, x._2, null)))
     val rmNOps = rmNodes.map( x => (x._1, GraphOperation(RmN, x._2, null)))
     val addCOps = connectNodes.map( x => (x._1, GraphOperation(AddC, x._2.src, x._2.dst)))
-    val rmCOps = connectNodes.map( x => (x._1, GraphOperation(RmC, x._2.src, x._2.dst)))
+    val rmCOps = disconnectNodes.map( x => (x._1, GraphOperation(RmC, x._2.src, x._2.dst)))
 
 
     val allOps: Seq[(Long, GraphOperation)] = (crNOps ++ rmNOps++ addCOps ++ rmCOps).sortWith( (x,y) => x._1 < y._1)
+
+    println("ALL OPS")
+    allOps.foreach(println(_))
+    println("#####")
 
     // immutable graph, so we can build it up in a step-wise manner
     var currentGraph = Graph[Node, DiEdge]()
@@ -165,10 +169,11 @@ object TreeQuencerLogAnalyzer extends App {
       val time=gop._1
 
       op match {
-        case GraphOperation(AddN, srcN, _) =>   currentGraph = currentGraph + srcN
-        case GraphOperation(RmN, srcN, _) =>    currentGraph = currentGraph - srcN
-        case GraphOperation(AddC, srcN, dstN) => currentGraph = currentGraph + dstN ~> srcN
-        case GraphOperation(RmC, srcN, dstN) => currentGraph = currentGraph -(srcN ~> dstN)
+        case GraphOperation(AddN, srcN, _) =>   currentGraph = currentGraph   + srcN
+        case GraphOperation(RmN, srcN, _) =>    currentGraph = currentGraph   - srcN
+        case GraphOperation(AddC, srcN, dstN) => currentGraph = currentGraph  + dstN ~> srcN
+        case GraphOperation(RmC, srcN, dstN) => currentGraph = currentGraph   -  (dstN ~> srcN)
+        case _ => println("foo")
       }
 
       (time , currentGraph)
@@ -244,10 +249,10 @@ object TreeQuencerLogAnalyzer extends App {
   def analyze(filename: String) = {
     val log = SessionLogLoader.load(filename)
 
-    val crs = creationSequence(log)
-    val rms = removalSequence(log)
-    val ass = additionToSetSequence(log)
-    val rmss= removalFromSetSequence(log)
+    val crs  = creationSequence(log)
+    val rms  = removalSequence(log)
+    val ass  = additionToSetSequence(log)
+    val rmss = removalFromSetSequence(log)
     val ges  = gestureSequence(log)
     val mes  = metroChangedSequence(log)
 
@@ -273,7 +278,7 @@ object TreeQuencerLogAnalyzer extends App {
 
     rootN.foreach(println(_))
 
-    grs.map( x => RhythmReconstruction.printScore(RhythmReconstruction.game0And2(rootN, x._2, {x:Node => 0} ) ) )
+    grs.map( x => {RhythmReconstruction.printScore(RhythmReconstruction.game1(rootN, x._2) ) ; println(x)})
   }
 
 }

@@ -7,6 +7,8 @@ class Node(val id: String, val name: String) extends Exportable {
   override def toCSV = {
     id+dlmtr+name
   }
+
+  override def toString = name+"_"+id
 }
 
 object Node {
