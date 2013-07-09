@@ -14,10 +14,10 @@ class Gesture(val t: String, val node: Node, val lenMilli: Long,
               val endTopo: Topology,
               val posDev: Double, rotDev: Double, val scaleDev: Double ) extends Exportable {
 
-  override def csvDescriptor = beginTopo.csvDescriptor+dlmtr+endTopo.csvDescriptor+dlmtr+"posDev"+dlmtr+"rotDev"+dlmtr+"scaleDev"
+  override def csvDescriptor = node.csvDescriptor+dlmtr+beginTopo.csvDescriptor+dlmtr+endTopo.csvDescriptor+dlmtr+"posDev"+dlmtr+"rotDev"+dlmtr+"scaleDev"+dlmtr+"lenMilli"
 
   override def toCSV = {
-    beginTopo.toCSV+dlmtr+endTopo.toCSV+dlmtr+posDev+dlmtr+rotDev+dlmtr+scaleDev
+    node.toCSV+dlmtr+beginTopo.toCSV+dlmtr+endTopo.toCSV+dlmtr+posDev+dlmtr+rotDev+dlmtr+scaleDev+dlmtr+lenMilli
   }
 }
 

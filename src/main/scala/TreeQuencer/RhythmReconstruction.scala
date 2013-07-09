@@ -69,14 +69,16 @@ object RhythmReconstruction {
         })
         println(line)
     })
-    println("Length: " + sc.length)
+    println("Length: " + sc.length+"\n\n")
   }
 
   def game0(rootNodes: Seq[Node], graph: Graph[Node, DiEdge]) = game0And2(rootNodes, graph, {
     x => 1
   })
 
-  def game0And2(rootNodes: Seq[Node], graph: Graph[Node, DiEdge], pulses: (Node) => Int): Score = {
+  def game2(rootNodes: Seq[Node], graph: Graph[Node, DiEdge], pulses: (Node) => Int): Score = game0And2(rootNodes, graph, pulses)
+
+  private def game0And2(rootNodes: Seq[Node], graph: Graph[Node, DiEdge], pulses: (Node) => Int): Score = {
     var myScore = createScore()
 
 
@@ -86,7 +88,7 @@ object RhythmReconstruction {
       // only one root node:
       val root = graph.get(rootNodes(0))
 
-      println("R " + root + " " + root.diSuccessors + " " + root.diPredecessors)
+      //println("R " + root + " " + root.diSuccessors + " " + root.diPredecessors)
 
 
       var branchMap = Map[graph.type#NodeT, (Int, Int, List[graph.type#NodeT])]()
@@ -94,6 +96,8 @@ object RhythmReconstruction {
         n =>
         //pulses to go, pulses of branch, list of nodes to visit
           branchMap += (n ->(pulses(n), pulses(n), List(n)))
+
+          println("PULSES FOR BRANCH-NODE " + n.name + " " + pulses(n))
       })
 
       var done = false
@@ -147,9 +151,14 @@ object RhythmReconstruction {
               }
 
 
+            } else {
+              // still have to go some more pulse repetitions until done...
+              cL = cL ++ vistingNodes
+
+              done = false
             }
 
-            nextBranchMap += (kv._1 ->(pulsesToGo, pulses, cL))
+            nextBranchMap += (kv._1 -> (pulsesToGo, pulses, cL))
 
         })
 
