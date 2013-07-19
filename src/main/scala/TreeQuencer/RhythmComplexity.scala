@@ -3,7 +3,32 @@ package TreeQuencer
 import collection.immutable.IndexedSeq
 
 object RhythmComplexity {
-  def rhythmicOddityPairsSequence(sequence: Seq[Boolean]): Int = {
+  def numEvents(score: RhythmReconstruction.Score): Seq[Double] = {
+    if (score.length < 2) {
+      Seq.fill(RhythmReconstruction.numInstruments()) {
+        0.0
+      }
+    } else {
+      val noTracks = score(0).length
+
+      val n = (0 to noTracks - 1) map {
+        track =>
+          val seq = score map {
+            x => x(track)
+          }
+          val noe = seq.foldLeft(0.0) {
+            (x, y) => if (y) x + 1.0 else x
+          }
+
+          noe
+      }
+
+      n
+
+    }
+  }
+
+  def rhythmicOddityPairsSequence(sequence: Seq[Boolean]): Double = {
     val n2 = sequence.length / 2
 
     (0 to n2 - 1).foldLeft(0)({
@@ -11,9 +36,11 @@ object RhythmComplexity {
     })
   }
 
-  def rhythmicOddity(score: RhythmReconstruction.Score): Int = {
+  def rhythmicOddity(score: RhythmReconstruction.Score): Seq[Double] = {
     if (score.length < 2) {
-      0
+      Seq.fill(RhythmReconstruction.numInstruments()) {
+        0.0
+      }
     } else {
       val noTracks = score(0).length
 
@@ -21,16 +48,31 @@ object RhythmComplexity {
         track => rhythmicOddityPairsSequence(score map {
           x => x(track)
         })
-      } sum
+      }
     }
   }
 
-  def wnbd(score: RhythmReconstruction.Score, meter: Int, track: Int): Double = {
-       // map to score
-    val sequence = score map {
-      x => x(track)
+  def wnbd(score: RhythmReconstruction.Score, meter: Int): Seq[Double] = {
+    // map to score
+
+    var wnbd = Seq.fill(RhythmReconstruction.numInstruments()) {
+      0.0
     }
-    wnbdSequence(sequence, meter)
+
+    if (score.length >= meter) {
+      wnbd = (0 to score(0).length - 1) map {
+        track =>
+
+          val sequence = score map {
+            x => x(track)
+          }
+
+          wnbdSequence(sequence, meter)
+
+      }
+    }
+
+    wnbd
   }
 
   def wnbdSequence(sequence: Seq[Boolean], meter: Int): Double = {
@@ -65,7 +107,7 @@ object RhythmComplexity {
       x => x._2
     })
     val noteLength = (offsets :+ sequence.length).sliding(2) map {
-      x => x(1) - x(0)
+      x => if (x.length >= 2) x(1) - x(0) else 1
     } toList
 
 
@@ -87,11 +129,10 @@ object RhythmComplexity {
 
         val weight = if (absDist0 == 0) {
           0.0
-                // e+1 exists
+          // e+1 exists
         } else if (memberShipE1 < mdist.length) {
           val absDist1 = scala.math.abs(mdist(memberShipE1))
           val Tx = scala.math.min(absDist0, absDist1) / meter.toDouble
-          println("T(x) : " + Tx)
           // e+2 exists
           if (memberShipE2 < mdist.length) {
             val absDist2 = scala.math.abs(mdist(memberShipE2))
@@ -113,9 +154,11 @@ object RhythmComplexity {
         weight
     }
 
-    println("W: " + weights.sum)
+    val divisor = if (membershipMeter.length > 0) membershipMeter.length.toDouble else 1.0
 
-    weights.sum / membershipMeter.length.toDouble
+    val ret = weights.sum / divisor
+
+    BigDecimal(ret).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
 

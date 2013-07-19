@@ -12,12 +12,12 @@ class PathStatistics(val meanLength: Double, val stdVar: Double,
   override def csvDescriptor = {
     "meanLength" + dlmtr +
       "stdVar" + dlmtr +
-      "medianLength" + ((1 to lengthHisto.size).foreach(x => dlmtr + "h" + x))
+      "medianLength" + SessionLogLoader.array2CSVHeader(lengthHisto, "h")
   }
 
   override def toCSV = {
-    var histo = lengthHisto.foldLeft("")((x, y) => x + dlmtr + y)
-    "" + meanLength + dlmtr + stdVar + dlmtr + medianLength + dlmtr + lengthHisto
+    val histo = SessionLogLoader.array2CSV(lengthHisto)
+    "" + meanLength + dlmtr + stdVar + dlmtr + medianLength + histo
   }
 }
 
@@ -33,10 +33,41 @@ class GraphStatistics(val noNodes: Int, val noEdges: Int,
   }
 }
 
+
+class RhythmStatistics(val length: Int, val numEvents: Seq[Double], val oddity : Seq[Double], val wnbd: Seq[Double],
+                       val meanOdd: Double, val meanWnbd: Double, val devOdd: Double,
+                       val devWnbd: Double, val sumOdd: Double, val sumWnbd: Double ) extends Exportable {
+
+  override def csvDescriptor = {
+          "length" +
+          SessionLogLoader.array2CSVHeader(numEvents, "n")  +
+          SessionLogLoader.array2CSVHeader(oddity, "o") +
+          SessionLogLoader.array2CSVHeader(wnbd, "w") + dlmtr +
+          "meanOdd" + dlmtr +
+          "meanWnbd" + dlmtr +
+          "devOdd" + dlmtr +
+          "devWnbd" + dlmtr +
+          "sumOdd" + dlmtr +
+          "sumWnbd"
+  }
+
+  override def toCSV = {
+          ""+length +
+          SessionLogLoader.array2CSV(numEvents) +
+          SessionLogLoader.array2CSV(oddity) +
+          SessionLogLoader.array2CSV(wnbd) + dlmtr +
+          meanOdd + dlmtr +
+          meanWnbd + dlmtr +
+          devOdd + dlmtr +
+          devWnbd + dlmtr +
+          sumOdd + dlmtr +
+          sumWnbd
+    }
+}
+
 object TreeQuencerLogAnalyzer extends App {
 
-  var synthNodeTypes: Seq[String] = Array("angular_something", "cube", "pentagon", "iconosphere", "tetrahedron", "decimate")
-
+  var synthNodeTypes: Seq[String] =  null
 
   def creationSequence(log: LogTable): Seq[(Long, Node)] = {
     val sequence = log.filter(x => NodeCreationFilter(x)).map(
@@ -100,7 +131,7 @@ object TreeQuencerLogAnalyzer extends App {
         val gestureType = row(SessionLogLoader.RowObj)
         val gestureStart = TimeParser.process(row(SessionLogLoader.RowMillis))
 
-        println("gesture type " + gestureType + " s "+gestureStart)
+//        println("gesture type " + gestureType + " s "+gestureStart)
 
         // search same gestures taking place later than begin
         var sameEndGesture: Seq[SessionLogLoader.Row] = endGestures.filter(
@@ -109,19 +140,19 @@ object TreeQuencerLogAnalyzer extends App {
               && (gestureStart < TimeParser.process(erow(SessionLogLoader.RowMillis)))
         )
 
-        println("------")
-        endGestures.foreach({
-                  erow =>
-                    println("---")
-                    println(erow(SessionLogLoader.RowObj) + " | " + gestureType + " FT " + (erow(SessionLogLoader.RowObj) == gestureType)+" lll " )
-                    println("###")
-                    println(TimeParser.process(erow(SessionLogLoader.RowMillis))+ " | " + gestureStart + " FT "+ (gestureStart < TimeParser.process(erow(SessionLogLoader.RowMillis))))
-                    println("+++")
-        })
+//        println("------")
+//        endGestures.foreach({
+//                  erow =>
+//                    println("---")
+//                    println(erow(SessionLogLoader.RowObj) + " | " + gestureType + " FT " + (erow(SessionLogLoader.RowObj) == gestureType)+" lll " )
+//                    println("###")
+//                    println(TimeParser.process(erow(SessionLogLoader.RowMillis))+ " | " + gestureStart + " FT "+ (gestureStart < TimeParser.process(erow(SessionLogLoader.RowMillis))))
+//                    println("+++")
+//        })
 
 
-        println("SAME ENDE GESTURE")
-        println(sameEndGesture)
+//        println("SAME ENDE GESTURE")
+//        println(sameEndGesture)
         sameEndGesture = sameEndGesture.sortWith((x, y) => x(SessionLogLoader.RowMillis) < y(SessionLogLoader.RowMillis))
 
         if (sameEndGesture.size >= 1) {
@@ -178,9 +209,9 @@ object TreeQuencerLogAnalyzer extends App {
 
     val allOps: Seq[(Long, GraphOperation)] = (crNOps ++ rmNOps ++ addCOps ++ rmCOps).sortWith((x, y) => x._1 < y._1)
 
-    println("ALL OPS")
-    allOps.foreach(println(_))
-    println("#####")
+//    println("ALL OPS")
+//    allOps.foreach(println(_))
+//    println("#####")
 
     // immutable graph, so we can build it up in a step-wise manner
     var currentGraph = Graph[Node, DiEdge]()
@@ -222,7 +253,7 @@ object TreeQuencerLogAnalyzer extends App {
   def pathStatistics(g: Graph[Node, DiEdge]): PathStatistics = {
     val nodes = g.nodes
     val nodes2 = g.nodes
-    val pathsHistogram = Array[Int](20);
+    val pathsHistogram = new Array[Int](20);
     var pathLengthList = List[Double]();
 
     println(nodes.size)
@@ -232,13 +263,17 @@ object TreeQuencerLogAnalyzer extends App {
         nodes2.foreach({
           n2 =>
             val p = n1 pathTo n2
+//            println(p)
             if (!p.isEmpty) {
-              val plength = p.toList.length
+              val plength = p.get.edges.length
+//              println("plength "+plength)
               val idx = plength - 1
 
               pathsHistogram(idx) = pathsHistogram(idx) + 1;
 
               pathLengthList = pathLengthList :+ plength.toDouble
+
+//              println(pathLengthList)
             }
         })
     })
@@ -266,6 +301,28 @@ object TreeQuencerLogAnalyzer extends App {
     val medianDegrees = median(degrees)
 
     new GraphStatistics(noNodes, noEdges, avgDegrees, varDegrees, medianDegrees)
+  }
+
+  def rhythmStatistics(sc: RhythmReconstruction.Score): RhythmStatistics = {
+    val length = sc.length
+
+    val numEvents = RhythmComplexity.numEvents(sc)
+    val oddity = RhythmComplexity.rhythmicOddity(sc)
+    val wnbd = RhythmComplexity.wnbd(sc, 4)
+
+    val meanOdd = mean(oddity)
+    val meanWndb= mean(wnbd)
+
+    val devOdd = stdDev(oddity)
+    val devWndb= stdDev(wnbd)
+
+    val sumOdd = oddity.sum
+    val sumWnbd= wnbd.sum
+
+    new RhythmStatistics(length, numEvents, oddity, wnbd, meanOdd, meanWndb,
+                         devOdd, devWndb, sumOdd, sumWnbd)
+
+
   }
 
   def stateOfNodeAtTimestamp(ges: Seq[(Long, Gesture)], node: Node, ts: Long): Option[Topology] = {
@@ -323,7 +380,7 @@ object TreeQuencerLogAnalyzer extends App {
   }
 
 
-  def analyze(filename: String) = {
+  def analyze(filename: String, game: Int, path: String) = {
     val log = SessionLogLoader.load(filename)
 
     val crs = creationSequence(log)
@@ -338,6 +395,23 @@ object TreeQuencerLogAnalyzer extends App {
     val grstat = grs.map(x => (x._1, graphStatistics(x._2)))
     val pstat = grs.map(x => (x._1, pathStatistics(x._2)))
 
+    val rootN = rootNodes(crs)
+
+    rootN.foreach(println(_))
+
+    val rhythmstat = grs.map(x => {
+
+      val score = game match {
+        case 0 => RhythmReconstruction.game0(rootN, x._2)
+        case 1 => RhythmReconstruction.game1(rootN, x._2)
+        case 2 => RhythmReconstruction.game2(rootN, x._2, pulseInverseFrequencyOfNode(ges, x._1))
+      }
+      //RhythmReconstruction.printScore(score)
+      RhythmReconstruction.dumpScore(path+"score_at_"+x._1+".csv", score)
+
+      ( x._1, rhythmStatistics(score) )
+    })
+
     val fileMap = Map(
         "creation" -> crs,
         "removal" -> rms,
@@ -346,21 +420,42 @@ object TreeQuencerLogAnalyzer extends App {
         "gestures" -> ges ,
         "metronome" -> mes,
         "graphStat" -> grstat,
-        "pathStat" -> pstat
+        "pathStat" -> pstat,
+        "rhythmStat" -> rhythmstat
     )
 
 
-    SessionLogLoader.printSeqCollection(fileMap)
+    SessionLogLoader.writeSeqCollection(path, fileMap)
 
-    val rootN = rootNodes(crs)
-
-    rootN.foreach(println(_))
-
-    grs.foreach(x => {
-      val score = RhythmReconstruction.game2(rootN, x._2, pulseInverseFrequencyOfNode(ges, x._1))
-      RhythmReconstruction.printScore(score)
-    })
 
   }
+
+
+  override def main(args: Array[String]) = {
+    import java.io.File
+
+    if (args.length != 3) {
+      println("Missing arguments, should be: <log> <gametype (Number)> <outputPath>")
+    } else {
+      val log = args(0)
+      val game= args(1).toInt
+      val path = args(2)
+
+      if (game > 2 || game < 0) {
+        println("Wrong game number")
+      } else if(! (new File(log)).exists ) {
+        println("Log does not exist")
+      } else {
+
+        synthNodeTypes =  Array("angular_something", "cube", "pentagon", "iconosphere", "tetrahedron", "decimate")
+
+        analyze(log, game, path)
+      }
+    }
+
+  }
+
+
+
 
 }

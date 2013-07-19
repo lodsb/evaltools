@@ -4,6 +4,8 @@ import scalax.collection.Graph
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 import collection.Set
+import java.io.PrintWriter
+import SessionLogLoader.SessionLogLoader
 
 object RhythmReconstruction {
   def synthNodeClassID(node: Node): Int = {
@@ -56,10 +58,9 @@ object RhythmReconstruction {
     myScore
   }
 
-  def printScore(sc: Score) = {
+  def score2String(sc: Score) : String = {
     val nInst = numInstruments()
-
-    println("############# SCORE #################")
+    var ret = ""
 
     (0 to nInst - 1).foreach({
       x =>
@@ -67,9 +68,27 @@ object RhythmReconstruction {
         sc.foreach(y => {
           line += (if (y(x)) "X" else "-")
         })
-        println(line)
+        ret = ret + line + "\n"
     })
-    println("Length: " + sc.length+"\n\n")
+    ret = ret + "***\n"
+    ret = ret + ("Length: " + sc.length+"\n")
+    ret = ret + ("Complexity Oddity: " + RhythmComplexity.rhythmicOddity(sc) +"\n")
+    ret = ret + ("Complexity WNBD: " + RhythmComplexity.wnbd(sc,4) +"\n")
+    ret = ret + ("Number of Events: " + RhythmComplexity.numEvents(sc) +"\n")
+
+    ret
+  }
+
+  def printScore(sc: Score) = {
+    println("############# SCORE #################")
+    println(score2String(sc))
+  }
+
+  def dumpScore(path: String, sc: Score) = {
+    val scoreString = score2String(sc)
+
+    SessionLogLoader.writeToFile(path, scoreString)
+
   }
 
   def game0(rootNodes: Seq[Node], graph: Graph[Node, DiEdge]) = game0And2(rootNodes, graph, {
@@ -102,8 +121,14 @@ object RhythmReconstruction {
 
       var done = false
 
-      while (!done) {
+      var maxLength = 4*1000
+
+      while (!done && maxLength >= 0) {
         done = true
+
+        maxLength = maxLength - 1
+
+        if (maxLength % 1000 == 0) println("Hang? waiting..." + maxLength)
 
         val currentStaff = createStaff()
         var nextBranchMap = Map[graph.type#NodeT, (Int, Int, List[graph.type#NodeT])]()
@@ -169,6 +194,8 @@ object RhythmReconstruction {
       }
 
     }
+
+    println("DONE")
 
     myScore
 
