@@ -3,7 +3,7 @@ package TreeQuencer
 import SessionLogLoader._
 
 class Topology(val coord: (Float, Float, Float), val rot: (Float, Float, Float), val scale: Float) extends Exportable {
-  override def csvDescriptor = "coordX"+dlmtr+"coordY"+dlmtr+"coordZ"+dlmtr+"rotX"+dlmtr+"rotY"+"rotZ"+dlmtr+"scale"
+  override def csvDescriptor = "coordX"+dlmtr+"coordY"+dlmtr+"coordZ"+dlmtr+"rotX"+dlmtr+"rotY"+dlmtr+"rotZ"+dlmtr+"scale"
 
   override def toCSV = {
     ""+coord._1+dlmtr+coord._2+dlmtr+coord._3+dlmtr+rot._1+dlmtr+rot._2+dlmtr+rot._3+dlmtr+scale
