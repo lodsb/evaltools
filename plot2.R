@@ -74,11 +74,46 @@ gA$grobs[[8]] <- gtable_add_cols(gA$grobs[[8]], unit(abs(diff(c(leg1, leg2))), "
 grid.newpage()
 grid.arrange(gA, gB, nrow = 2)
 dev.off()
+
+#dump to file
+outfile <- paste(myfile, "RstatisticsWnbd.csv", sep="")
+wnbd <- unlist(df3["meanWnbd"])
+q = quantile(wnbd)
+swnbdString = paste(myfile,min(wnbd), max(wnbd), mean(wnbd), median(wnbd), var(wnbd), sd(wnbd), q[1], q[2], q[3], q[4], q[5], sep=",")
+cat(swnbdString, file=outfile,sep="\n")
+
+outfile <- paste(myfile, "RstatisticsWnbdDiff.csv", sep="")
+wnbdd <- diff(unlist(df3["meanWnbd"]))
+q = quantile(wnbdd)
+swnbdString = paste(myfile,min(wnbdd), max(wnbdd), mean(wnbdd), median(wnbdd), var(wnbdd), sd(wnbdd), q[1], q[2], q[3], q[4], q[5], sep=",")
+cat(swnbdString, file=outfile,sep="\n")
+
+outfile <- paste(myfile, "RstatisticsOdd.csv", sep="")
+wnbd <- unlist(df3["meanOdd"])
+q = quantile(wnbd)
+swnbdString = paste(myfile,min(wnbd), max(wnbd), mean(wnbd), median(wnbd), var(wnbd), sd(wnbd), q[1], q[2], q[3], q[4], q[5], sep=",")
+cat(swnbdString, file=outfile,sep="\n")
+
+outfile <- paste(myfile, "RstatisticsOddDiff.csv", sep="")
+wnbdd <- diff(unlist(df3["meanOdd"]))
+q = quantile(wnbdd)
+swnbdString = paste(myfile,min(wnbdd), max(wnbdd), mean(wnbdd), median(wnbdd), var(wnbdd), sd(wnbdd), q[1], q[2], q[3], q[4], q[5], sep=",")
+cat(swnbdString, file=outfile,sep="\n")
+
+outfile <- paste(myfile, "RstatisticsGestures.csv", sep="")
+gest <- unlist(df4["lenMilli"])
+q = quantile(gest)
+sgestString = paste(myfile,min(gest), max(gest), mean(gest), median(gest), var(gest), sd(gest), q[1], q[2], q[3], q[4], q[5], sep=",")
+cat(sgestString, file=outfile,sep="\n")
+
+
 }
 myfile <- commandArgs()[6]
 path <- commandArgs()[7]
 
 print(commandArgs())
 plotStuff(myfile, path)
+
+
 
 #plotStuff("/home/lodsb/Dokumente/development/intellij_projects/evaltools/logs21/logs21", "/tmp/trashplot666.pdf")

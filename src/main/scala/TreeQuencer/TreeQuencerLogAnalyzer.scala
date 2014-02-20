@@ -156,7 +156,35 @@ object TreeQuencerLogAnalyzer extends App {
         sameEndGesture = sameEndGesture.sortWith((x, y) => x(SessionLogLoader.RowMillis) < y(SessionLogLoader.RowMillis))
 
         if (sameEndGesture.size >= 1) {
-          gestureList += (row -> sameEndGesture(0))
+          var saveToAdd = true
+
+          // uniqueness: if contains the same object with the same gesture duration within a 1 second time frame (start) then dont add it
+          val sEG = sameEndGesture(0)
+
+          gestureList.foreach({ x =>
+            val s = x._1
+            val e = x._2
+
+            if(e(SessionLogLoader.RowObj) == sEG(SessionLogLoader.RowObj)) {
+
+              if(e(SessionLogLoader.RowMillisPassed) == sEG(SessionLogLoader.RowMillisPassed)) {
+
+                if( (scala.math.abs(e(SessionLogLoader.RowMillis).toLong - sEG(SessionLogLoader.RowMillis).toLong ) ) < 1000) {
+
+                  saveToAdd = false
+
+                }
+
+              }
+
+            }
+
+          })
+
+
+          if(saveToAdd){
+            gestureList += (row -> sameEndGesture(0))
+          }
         }
     }
 
@@ -438,7 +466,7 @@ object TreeQuencerLogAnalyzer extends App {
       println("Missing arguments, should be: <log> <gametype (Number)> <outputPath>")
     } else {
       val log = args(0)
-      val game= args(1).toInt
+      val game= args(1).toInt-1
       val path = args(2)
 
       if (game > 2 || game < 0) {

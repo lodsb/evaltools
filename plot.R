@@ -48,7 +48,7 @@ data3 <- df3
 df4 <- read.table(metro, header=T,sep=",")
 data4 <- df4
 
-p1 <- ggplot(data3, aes(time/(1000*60))) + geom_line(aes(y=10*meanWnbd, color= c("meanWnbd"))) + geom_line(aes(y=meanOdd, colour="meanOdd")) + geom_line(aes(y=length/1, colour="length")) + scale_x_continuous(name="time in minutes",limits=c(0, 20)) +  scale_y_continuous(limits=c(0, 100)) + opts(title = myfile)
+p1 <- ggplot(data3, aes(time/(1000*60))) + geom_line(aes(y=10*meanWnbd, color= c("meanWnbd"))) + geom_line(aes(y=c(10*diff(10*meanWnbd),10), color=c("meanWnbdDiff")))+ geom_line(aes(y=meanOdd, colour="meanOdd")) + geom_line(aes(y=length/1, colour="length")) + scale_x_continuous(name="time in minutes",limits=c(0, 20)) +  scale_y_continuous(limits=c(0, 100)) + opts(title = myfile)
 p2 <- ggplot(data4, aes(time/(1000*60))) + geom_line(aes(y=dur, color= c("duration"))) + scale_x_continuous(name="time in minutes", limits=c(0, 20))
 pdf(path)
 multiplot(p1,p2)
